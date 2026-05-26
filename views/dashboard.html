@@ -1,0 +1,310 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>仪表盘 - LinkForge</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #818cf8;
+      --bg: #0f172a; --bg-card: #1e293b; --bg-input: #334155;
+      --text: #e2e8f0; --text-muted: #94a3b8; --text-dim: #64748b;
+      --border: #334155; --success: #22c55e; --error: #ef4444;
+    }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; border-bottom: 1px solid var(--border); }
+    .logo { font-size: 1.3rem; font-weight: 800; color: var(--primary-light); text-decoration: none; }
+    .logo span { color: var(--text-muted); font-weight: 400; }
+    .nav a { color: var(--text-muted); text-decoration: none; margin-left: 1.5rem; font-size: 0.9rem; }
+    .nav a:hover { color: var(--text); }
+    
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    
+    .search-bar { display: flex; gap: 0.75rem; margin-bottom: 2rem; }
+    .search-bar input { flex: 1; padding: 0.75rem 1rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.95rem; outline: none; }
+    .search-bar input:focus { border-color: var(--primary); }
+    .btn { padding: 0.75rem 1.25rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; text-decoration: none; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    
+    /* Stats Overview */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+    .stat-card .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-card .value { font-size: 2rem; font-weight: 800; margin-top: 0.25rem; }
+    .stat-card .value.blue { color: var(--primary-light); }
+    .stat-card .value.green { color: var(--success); }
+    
+    /* Links Table */
+    .table-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .table-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .table-header h2 { font-size: 1.1rem; }
+    
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.75rem 1.25rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    th { color: var(--text-muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background: rgba(99, 102, 241, 0.05); }
+    
+    .link-cell { max-width: 300px; }
+    .link-cell a { color: var(--primary-light); text-decoration: none; font-weight: 600; }
+    .link-cell .original { color: var(--text-dim); font-size: 0.8rem; margin-top: 0.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 280px; }
+    
+    .clicks-badge { background: var(--bg-input); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: var(--primary-light); }
+    
+    .actions { display: flex; gap: 0.5rem; }
+    .action-btn { background: none; border: 1px solid var(--border); color: var(--text-muted); padding: 0.3rem 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+    .action-btn:hover { border-color: var(--primary); color: var(--text); }
+    .action-btn.danger:hover { border-color: var(--error); color: var(--error); }
+    
+    .empty { text-align: center; padding: 3rem; color: var(--text-dim); }
+    
+    /* Detail Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; justify-content: center; align-items: center; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 700px; max-height: 80vh; overflow-y: auto; padding: 2rem; }
+    .modal h2 { margin-bottom: 1.5rem; }
+    .modal-close { float: right; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
+    .modal-close:hover { color: var(--text); }
+    
+    .detail-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .detail-stat { background: var(--bg-input); border-radius: 8px; padding: 0.75rem; text-align: center; }
+    .detail-stat .val { font-size: 1.5rem; font-weight: 800; color: var(--primary-light); }
+    .detail-stat .lbl { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+    
+    .chart-section { margin-top: 1.5rem; }
+    .chart-section h3 { font-size: 0.95rem; margin-bottom: 0.75rem; color: var(--text-muted); }
+    .bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 120px; padding: 0.5rem 0; }
+    .bar { flex: 1; background: var(--primary); border-radius: 3px 3px 0 0; min-height: 4px; position: relative; transition: height 0.3s; }
+    .bar:hover { background: var(--primary-light); }
+    .bar-tooltip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: var(--bg); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem; white-space: nowrap; }
+    .bar:hover .bar-tooltip { display: block; }
+    
+    .breakdown { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem; }
+    .breakdown-item { background: var(--bg-input); border-radius: 8px; padding: 0.75rem; }
+    .breakdown-item h4 { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .breakdown-row { display: flex; justify-content: space-between; padding: 0.25rem 0; font-size: 0.85rem; }
+    .breakdown-row .bar-bg { height: 4px; background: var(--border); border-radius: 2px; margin-top: 0.25rem; }
+    .breakdown-row .bar-fill { height: 100%; background: var(--primary); border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="logo">🔗 Link<span>Forge</span></a>
+    <nav class="nav">
+      <a href="/">首页</a>
+      <a href="/dashboard">仪表盘</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="输入短码查看统计... 例如: abc1234" />
+      <button class="btn btn-primary" onclick="searchLink()">🔍 查询</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">总链接数</div>
+        <div class="value blue" id="totalLinks">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">总点击量</div>
+        <div class="value green" id="totalClicks">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">平均点击</div>
+        <div class="value blue" id="avgClicks">0</div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <h2>📋 最近创建的链接</h2>
+        <span style="color: var(--text-dim); font-size: 0.85rem;" id="linkCountLabel"></span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>短链</th>
+            <th>原始链接</th>
+            <th>点击量</th>
+            <th>创建时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="linksTable">
+          <tr><td colspan="5" class="empty">暂无链接，去<a href="/" style="color: var(--primary-light);">首页</a>创建一个吧</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <h2 id="modalTitle">链接详情</h2>
+      <div class="detail-stats">
+        <div class="detail-stat"><div class="val" id="detailClicks">0</div><div class="lbl">总点击</div></div>
+        <div class="detail-stat"><div class="val" id="detailCountries">0</div><div class="lbl">国家/地区</div></div>
+        <div class="detail-stat"><div class="val" id="detailDevices">0</div><div class="lbl">设备类型</div></div>
+      </div>
+      <div class="chart-section">
+        <h3>📈 最近30天点击趋势</h3>
+        <div class="bar-chart" id="clicksChart"></div>
+      </div>
+      <div class="breakdown">
+        <div class="breakdown-item">
+          <h4>🌍 地区分布</h4>
+          <div id="countryBreakdown"></div>
+        </div>
+        <div class="breakdown-item">
+          <h4>💻 设备分布</h4>
+          <div id="deviceBreakdown"></div>
+        </div>
+        <div class="breakdown-item">
+          <h4>🌐 浏览器</h4>
+          <div id="browserBreakdown"></div>
+        </div>
+        <div class="breakdown-item">
+          <h4>🔗 来源</h4>
+          <div id="referrerBreakdown"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = '';
+
+    // Load links
+    async function loadLinks() {
+      try {
+        const res = await fetch(`${API}/api/links?limit=50`);
+        const data = await res.json();
+        if (!data.success) return;
+
+        const links = data.data;
+        const tbody = document.getElementById('linksTable');
+        
+        if (links.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="empty">暂无链接，去<a href="/" style="color:var(--primary-light)">首页</a>创建一个吧</td></tr>';
+          return;
+        }
+
+        document.getElementById('totalLinks').textContent = data.pagination.total;
+        document.getElementById('linkCountLabel').textContent = `共 ${data.pagination.total} 条`;
+
+        let totalClicks = 0;
+        links.forEach(l => totalClicks += l.clickCount);
+        document.getElementById('totalClicks').textContent = totalClicks;
+        document.getElementById('avgClicks').textContent = links.length > 0 ? Math.round(totalClicks / links.length) : 0;
+
+        tbody.innerHTML = links.map(l => `
+          <tr>
+            <td class="link-cell">
+              <a href="${l.shortUrl}" target="_blank">${l.shortCode}</a>
+            </td>
+            <td class="link-cell">
+              <div class="original" title="${l.originalUrl}">${l.originalUrl}</div>
+            </td>
+            <td><span class="clicks-badge">${l.clickCount}</span></td>
+            <td style="color:var(--text-dim);font-size:0.85rem">${new Date(l.createdAt).toLocaleDateString('zh-CN')}</td>
+            <td class="actions">
+              <button class="action-btn" onclick="viewStats('${l.shortCode}')">📊</button>
+              <button class="action-btn" onclick="copyLink('${l.shortUrl}')">📋</button>
+              <button class="action-btn danger" onclick="deleteLink('${l.shortCode}')">🗑</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('Failed to load links:', err);
+      }
+    }
+
+    // View link stats
+    async function viewStats(code) {
+      try {
+        const res = await fetch(`${API}/api/links/${code}/stats`);
+        const data = await res.json();
+        if (!data.success) return;
+
+        const { link, stats } = data.data;
+        document.getElementById('modalTitle').textContent = `📊 ${link.shortCode} 统计详情`;
+        document.getElementById('detailClicks').textContent = stats.totalClicks;
+        document.getElementById('detailCountries').textContent = stats.countries.length;
+        document.getElementById('detailDevices').textContent = stats.devices.length;
+
+        // Clicks chart
+        const chart = document.getElementById('clicksChart');
+        const maxClicks = Math.max(...stats.clicksByDay.map(d => d.clicks), 1);
+        chart.innerHTML = stats.clicksByDay.map(d => `
+          <div class="bar" style="height:${(d.clicks / maxClicks) * 100}%">
+            <div class="bar-tooltip">${d.date}: ${d.clicks}次</div>
+          </div>
+        `).join('');
+
+        // Breakdowns
+        renderBreakdown('countryBreakdown', stats.countries, stats.totalClicks);
+        renderBreakdown('deviceBreakdown', stats.devices, stats.totalClicks);
+        renderBreakdown('browserBreakdown', stats.browsers, stats.totalClicks);
+        renderBreakdown('referrerBreakdown', stats.topReferrers.slice(0, 5), stats.totalClicks);
+
+        document.getElementById('modal').classList.add('show');
+      } catch (err) {
+        console.error('Failed to load stats:', err);
+      }
+    }
+
+    function renderBreakdown(containerId, items, total) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = items.map(item => {
+        const pct = total > 0 ? Math.round((item.count / total) * 100) : 0;
+        const name = item.country || item.device_type || item.browser || item.referer || 'Unknown';
+        return `
+          <div class="breakdown-row">
+            <span>${name}</span>
+            <span style="color:var(--text-dim)">${item.count} (${pct}%)</span>
+          </div>
+        `;
+      }).join('') || '<div style="color:var(--text-dim);font-size:0.85rem">暂无数据</div>';
+    }
+
+    function closeModal() { document.getElementById('modal').classList.remove('show'); }
+    document.getElementById('modal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+
+    function copyLink(url) {
+      navigator.clipboard.writeText(url).then(() => alert('已复制: ' + url));
+    }
+
+    async function deleteLink(code) {
+      if (!confirm(`确定删除链接 ${code}?`)) return;
+      try {
+        await fetch(`${API}/api/links/${code}`, { method: 'DELETE' });
+        loadLinks();
+      } catch (err) { console.error(err); }
+    }
+
+    async function searchLink() {
+      const code = document.getElementById('searchInput').value.trim();
+      if (code) viewStats(code);
+    }
+
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') searchLink();
+    });
+
+    // Auto-load stats from URL param
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('code')) {
+      document.getElementById('searchInput').value = params.get('code');
+      viewStats(params.get('code'));
+    }
+
+    loadLinks();
+  </script>
+</body>
+</html>
