@@ -1,0 +1,285 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkForge - 智能短链 & 二维码生成器</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #818cf8;
+      --bg: #0f172a; --bg-card: #1e293b; --bg-input: #334155;
+      --text: #e2e8f0; --text-muted: #94a3b8; --text-dim: #64748b;
+      --border: #334155; --success: #22c55e; --error: #ef4444;
+    }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 2rem; border-bottom: 1px solid var(--border); }
+    .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary-light); text-decoration: none; }
+    .logo span { color: var(--text-muted); font-weight: 400; }
+    .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; text-decoration: none; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--text); }
+
+    /* Hero */
+    .hero { text-align: center; padding: 5rem 2rem 3rem; max-width: 800px; margin: 0 auto; }
+    .hero h1 { font-size: 3rem; font-weight: 800; line-height: 1.1; margin-bottom: 1rem; }
+    .hero h1 .gradient { background: linear-gradient(135deg, var(--primary-light), #a78bfa, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p { font-size: 1.15rem; color: var(--text-muted); max-width: 550px; margin: 0 auto 2.5rem; line-height: 1.6; }
+
+    /* URL Input Section */
+    .input-section { max-width: 700px; margin: 0 auto; padding: 0 2rem; }
+    .input-group { display: flex; gap: 0.75rem; background: var(--bg-card); padding: 0.5rem; border-radius: 12px; border: 1px solid var(--border); }
+    .input-group input { flex: 1; padding: 0.75rem 1rem; background: var(--bg-input); border: none; border-radius: 8px; color: var(--text); font-size: 1rem; outline: none; }
+    .input-group input::placeholder { color: var(--text-dim); }
+    .input-group .btn { padding: 0.75rem 1.5rem; border-radius: 8px; white-space: nowrap; }
+    
+    .options { display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+    .option-input { flex: 1; min-width: 200px; }
+    .option-input label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem; }
+    .option-input input { width: 100%; padding: 0.5rem 0.75rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.9rem; outline: none; }
+    .option-input input:focus { border-color: var(--primary); }
+
+    /* Result */
+    .result { display: none; margin-top: 1.5rem; background: var(--bg-card); border: 1px solid var(--success); border-radius: 12px; padding: 1.5rem; text-align: left; }
+    .result.show { display: block; animation: slideUp 0.3s ease; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .result-header h3 { color: var(--success); font-size: 1rem; }
+    .result-links { display: flex; flex-direction: column; gap: 0.75rem; }
+    .result-link { display: flex; align-items: center; gap: 0.5rem; background: var(--bg-input); padding: 0.5rem 0.75rem; border-radius: 8px; }
+    .result-link input { flex: 1; background: none; border: none; color: var(--text); font-size: 0.95rem; outline: none; }
+    .result-link .copy-btn { background: var(--primary); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+    .result-link .copy-btn:hover { background: var(--primary-dark); }
+    .result-link .copy-btn.copied { background: var(--success); }
+    .qr-preview { text-align: center; margin-top: 1rem; }
+    .qr-preview img { border-radius: 8px; background: white; padding: 0.5rem; }
+
+    /* Features */
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; max-width: 1000px; margin: 4rem auto 0; padding: 0 2rem; }
+    .feature { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; transition: border-color 0.2s; }
+    .feature:hover { border-color: var(--primary); }
+    .feature-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+    .feature h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .feature p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
+
+    /* Stats section */
+    .stats-bar { display: flex; justify-content: center; gap: 3rem; padding: 3rem 2rem; margin-top: 2rem; }
+    .stat { text-align: center; }
+    .stat .num { font-size: 2rem; font-weight: 800; color: var(--primary-light); }
+    .stat .label { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+    /* Footer */
+    .footer { text-align: center; padding: 2rem; color: var(--text-dim); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 4rem; }
+
+    /* Pricing hint */
+    .pricing-hint { text-align: center; margin-top: 3rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.1)); border-radius: 12px; border: 1px solid rgba(99,102,241,0.3); max-width: 600px; margin-left: auto; margin-right: auto; }
+    .pricing-hint p { color: var(--text-muted); font-size: 0.95rem; }
+    .pricing-hint strong { color: var(--primary-light); }
+
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 2rem; }
+      .input-group { flex-direction: column; }
+      .stats-bar { flex-direction: column; gap: 1.5rem; }
+      .header { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="logo">🔗 Link<span>Forge</span></a>
+    <div class="nav-links">
+      <a href="/dashboard">仪表盘</a>
+      <a href="#features">功能</a>
+      <a href="#" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">登录</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>智能<span class="gradient">短链</span> &<br>二维码生成器</h1>
+    <p>一键缩短链接、生成二维码、追踪点击数据。专为营销人、开发者和内容创作者打造。</p>
+  </section>
+
+  <section class="input-section">
+    <div class="input-group">
+      <input type="text" id="urlInput" placeholder="粘贴你的长链接... 例如 https://example.com/very-long-path" />
+      <button class="btn btn-primary" id="shortenBtn" onclick="shortenUrl()">
+        ⚡ 缩短
+      </button>
+    </div>
+
+    <div class="options">
+      <div class="option-input">
+        <label>自定义短码 (可选)</label>
+        <input type="text" id="customCode" placeholder="my-link" maxlength="30" />
+      </div>
+      <div class="option-input">
+        <label>标题 (可选)</label>
+        <input type="text" id="linkTitle" placeholder="给链接起个名" />
+      </div>
+    </div>
+
+    <div class="result" id="result">
+      <div class="result-header">
+        <h3>✅ 链接创建成功！</h3>
+        <span id="createdAt" style="color: var(--text-dim); font-size: 0.8rem;"></span>
+      </div>
+      <div class="result-links">
+        <div class="result-link">
+          <span style="color: var(--text-dim);">🔗</span>
+          <input type="text" id="shortUrl" readonly />
+          <button class="copy-btn" onclick="copyToClipboard('shortUrl', this)">复制</button>
+        </div>
+        <div class="result-link">
+          <span style="color: var(--text-dim);">📊</span>
+          <input type="text" id="statsUrl" readonly />
+          <button class="copy-btn" onclick="copyToClipboard('statsUrl', this)">复制</button>
+        </div>
+      </div>
+      <div class="qr-preview">
+        <img id="qrImage" width="180" height="180" alt="QR Code" />
+        <div style="margin-top: 0.5rem;">
+          <button class="btn btn-ghost" onclick="downloadQR()" style="font-size: 0.8rem;">📥 下载二维码</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats-bar">
+    <div class="stat"><div class="num" id="linkCount">0</div><div class="label">链接已创建</div></div>
+    <div class="stat"><div class="num" id="clickCount">0</div><div class="label">点击追踪</div></div>
+    <div class="stat"><div class="num">99.9%</div><div class="label">正常运行</div></div>
+  </div>
+
+  <section class="features" id="features">
+    <div class="feature">
+      <div class="feature-icon">⚡</div>
+      <h3>极速重定向</h3>
+      <p>全球CDN加速，毫秒级跳转体验。不丢失任何一个潜在客户。</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📊</div>
+      <h3>实时数据分析</h3>
+      <p>追踪点击来源、设备类型、地理位置。用数据驱动你的营销决策。</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📱</div>
+      <h3>智能二维码</h3>
+      <p>自动生成二维码，支持自定义颜色和尺寸。线上线下的完美桥梁。</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🎨</div>
+      <h3>自定义短码</h3>
+      <p>创建易记的品牌短链，提升品牌认知度和用户信任感。</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔒</div>
+      <h3>安全可靠</h3>
+      <p>恶意链接检测、过期链接管理。保护你的品牌和用户安全。</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔌</div>
+      <h3>API接口</h3>
+      <p>RESTful API，支持批量操作。无缝集成到你的工作流中。</p>
+    </div>
+  </section>
+
+  <div class="pricing-hint">
+    <p>🆓 <strong>免费使用</strong> — 每月100条短链 + 基础统计。需要更多？<a href="#" style="color: var(--primary-light);">查看付费方案</a></p>
+  </div>
+
+  <footer class="footer">
+    <p>LinkForge © 2026 · 用 ❤️ 和代码构建</p>
+  </footer>
+
+  <script>
+    const API_BASE = '';
+
+    async function shortenUrl() {
+      const url = document.getElementById('urlInput').value.trim();
+      const customCode = document.getElementById('customCode').value.trim();
+      const title = document.getElementById('linkTitle').value.trim();
+      const btn = document.getElementById('shortenBtn');
+
+      if (!url) {
+        document.getElementById('urlInput').style.borderColor = 'var(--error)';
+        document.getElementById('urlInput').focus();
+        return;
+      }
+
+      btn.textContent = '处理中...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/links`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, customCode: customCode || undefined, title: title || undefined }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to create link');
+        }
+
+        const d = data.data;
+        document.getElementById('shortUrl').value = d.shortUrl;
+        document.getElementById('statsUrl').value = `${window.location.origin}/dashboard?code=${d.shortCode}`;
+        document.getElementById('qrImage').src = d.qrCode + '?size=360';
+        document.getElementById('createdAt').textContent = new Date(d.createdAt).toLocaleString('zh-CN');
+        document.getElementById('result').classList.add('show');
+
+        // Update counter
+        const countEl = document.getElementById('linkCount');
+        countEl.textContent = parseInt(countEl.textContent) + 1;
+
+      } catch (err) {
+        alert('错误: ' + err.message);
+      } finally {
+        btn.textContent = '⚡ 缩短';
+        btn.disabled = false;
+      }
+    }
+
+    function copyToClipboard(inputId, btn) {
+      const input = document.getElementById(inputId);
+      navigator.clipboard.writeText(input.value).then(() => {
+        btn.textContent = '已复制 ✓';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = '复制';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
+    function downloadQR() {
+      const img = document.getElementById('qrImage');
+      const a = document.createElement('a');
+      a.href = img.src;
+      a.download = 'linkforge-qrcode.png';
+      a.click();
+    }
+
+    // Enter key support
+    document.getElementById('urlInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') shortenUrl();
+    });
+
+    // Load stats
+    fetch(`${API_BASE}/api/links?limit=1`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.pagination) document.getElementById('linkCount').textContent = d.pagination.total;
+      })
+      .catch(() => {});
+  </script>
+</body>
+</html>
