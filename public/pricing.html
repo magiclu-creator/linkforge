@@ -1,0 +1,259 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>定价 - LinkForge</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #818cf8;
+      --bg: #0f172a; --bg-card: #1e293b; --bg-input: #334155;
+      --text: #e2e8f0; --text-muted: #94a3b8; --text-dim: #64748b;
+      --border: #334155; --success: #22c55e; --accent: #a78bfa;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); }
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 2rem; border-bottom: 1px solid var(--border); }
+    .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary-light); text-decoration: none; }
+    .logo span { color: var(--text-muted); font-weight: 400; }
+    .nav { display: flex; gap: 1.5rem; align-items: center; }
+    .nav a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; }
+    .nav a:hover { color: var(--text); }
+
+    .pricing-page { max-width: 1100px; margin: 0 auto; padding: 4rem 2rem; }
+    .pricing-hero { text-align: center; margin-bottom: 4rem; }
+    .pricing-hero h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 1rem; }
+    .pricing-hero h1 .grad { background: linear-gradient(135deg, var(--primary-light), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .pricing-hero p { color: var(--text-muted); font-size: 1.15rem; max-width: 500px; margin: 0 auto; }
+
+    .toggle-row { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 3rem; }
+    .toggle-label { font-size: 0.95rem; color: var(--text-muted); cursor: pointer; }
+    .toggle-label.active { color: var(--text); font-weight: 600; }
+    .toggle { width: 48px; height: 26px; background: var(--bg-input); border-radius: 13px; position: relative; cursor: pointer; border: 1px solid var(--border); }
+    .toggle::after { content: ''; width: 20px; height: 20px; background: var(--primary); border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: 0.2s; }
+    .toggle.yearly::after { left: 24px; }
+    .save-badge { background: rgba(34,197,94,0.15); color: var(--success); padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.75rem; font-weight: 600; }
+
+    .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 4rem; }
+    .plan { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem 2rem; position: relative; transition: all 0.3s; }
+    .plan:hover { transform: translateY(-4px); }
+    .plan.featured { border-color: var(--primary); box-shadow: 0 0 40px rgba(99,102,241,0.15); }
+    .plan.featured::before { content: '最受欢迎'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 0.3rem 1rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; }
+    .plan-name { font-size: 0.85rem; font-weight: 600; color: var(--primary-light); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .plan-price { font-size: 3rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .plan-price .currency { font-size: 1.5rem; vertical-align: top; margin-right: 2px; }
+    .plan-price .period { font-size: 1rem; font-weight: 400; color: var(--text-muted); }
+    .plan-desc { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; line-height: 1.5; }
+    .plan-features { list-style: none; margin-bottom: 2rem; }
+    .plan-features li { padding: 0.5rem 0; color: var(--text-muted); font-size: 0.9rem; display: flex; align-items: center; gap: 0.6rem; }
+    .plan-features li .icon { width: 18px; text-align: center; }
+    .plan-features li .icon.yes { color: var(--success); }
+    .plan-features li .icon.no { color: var(--text-dim); }
+    .plan-features li.disabled { color: var(--text-dim); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; padding: 0.8rem 1.5rem; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; text-decoration: none; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-outline:hover { border-color: var(--primary); }
+
+    /* Comparison table */
+    .comparison { margin-top: 2rem; }
+    .comparison h2 { text-align: center; font-size: 1.8rem; margin-bottom: 2rem; }
+    .comp-table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+    .comp-table th, .comp-table td { padding: 1rem 1.25rem; text-align: center; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    .comp-table th { background: var(--bg-input); color: var(--text-muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; }
+    .comp-table td:first-child { text-align: left; font-weight: 500; }
+    .comp-table tr:last-child td { border-bottom: none; }
+    .comp-table .check { color: var(--success); }
+    .comp-table .cross { color: var(--text-dim); }
+
+    /* FAQ */
+    .faq-section { margin-top: 4rem; }
+    .faq-section h2 { text-align: center; font-size: 1.8rem; margin-bottom: 2rem; }
+    .faq-grid { max-width: 700px; margin: 0 auto; }
+    .faq-q { border-bottom: 1px solid var(--border); }
+    .faq-q summary { padding: 1.25rem 0; cursor: pointer; font-weight: 600; font-size: 1rem; list-style: none; display: flex; justify-content: space-between; }
+    .faq-q summary::-webkit-details-marker { display: none; }
+    .faq-q summary::after { content: '+'; font-size: 1.3rem; color: var(--text-dim); }
+    .faq-q[open] summary::after { content: '−'; }
+    .faq-q p { padding-bottom: 1.25rem; color: var(--text-muted); line-height: 1.7; }
+
+    /* CTA */
+    .bottom-cta { text-align: center; margin-top: 4rem; padding: 3rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; }
+    .bottom-cta h2 { font-size: 1.8rem; margin-bottom: 0.75rem; }
+    .bottom-cta p { color: var(--text-muted); margin-bottom: 1.5rem; }
+    .bottom-cta .btn { width: auto; display: inline-flex; padding: 0.8rem 2rem; }
+
+    .footer { text-align: center; padding: 2rem; color: var(--text-dim); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 4rem; }
+
+    @media (max-width: 768px) {
+      .plans { grid-template-columns: 1fr; max-width: 400px; margin-left: auto; margin-right: auto; }
+      .comp-table { font-size: 0.8rem; }
+      .comp-table th, .comp-table td { padding: 0.6rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="logo">🔗 Link<span>Forge</span></a>
+    <nav class="nav">
+      <a href="/">首页</a>
+      <a href="/dashboard">仪表盘</a>
+      <a href="/pricing">定价</a>
+    </nav>
+  </header>
+
+  <div class="pricing-page">
+    <div class="pricing-hero">
+      <h1>选择适合你的<span class="grad">方案</span></h1>
+      <p>从免费开始，按需升级。所有付费方案均支持7天无理由退款。</p>
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-label active" id="monthlyLabel">月付</span>
+      <div class="toggle" id="billingToggle" onclick="toggleBilling()"></div>
+      <span class="toggle-label" id="yearlyLabel">年付</span>
+      <span class="save-badge">省20%</span>
+    </div>
+
+    <div class="plans">
+      <!-- Free -->
+      <div class="plan">
+        <div class="plan-name">免费版</div>
+        <div class="plan-price"><span class="currency">¥</span>0 <span class="period">/月</span></div>
+        <div class="plan-desc">个人项目和试用体验</div>
+        <ul class="plan-features">
+          <li><span class="icon yes">✓</span> 每月100条短链</li>
+          <li><span class="icon yes">✓</span> 基础点击统计</li>
+          <li><span class="icon yes">✓</span> 标准二维码</li>
+          <li><span class="icon yes">✓</span> 社区支持</li>
+          <li class="disabled"><span class="icon no">—</span> 自定义短码</li>
+          <li class="disabled"><span class="icon no">—</span> 详细数据分析</li>
+          <li class="disabled"><span class="icon no">—</span> API访问</li>
+          <li class="disabled"><span class="icon no">—</span> 自定义域名</li>
+        </ul>
+        <a href="/" class="btn btn-outline">免费开始</a>
+      </div>
+
+      <!-- Pro -->
+      <div class="plan featured">
+        <div class="plan-name">专业版</div>
+        <div class="plan-price monthly-price"><span class="currency">¥</span>29 <span class="period">/月</span></div>
+        <div class="plan-price yearly-price" style="display:none"><span class="currency">¥</span>278 <span class="period">/年</span></div>
+        <div class="plan-desc">营销人和中小团队的最佳选择</div>
+        <ul class="plan-features">
+          <li><span class="icon yes">✓</span> 每月5,000条短链</li>
+          <li><span class="icon yes">✓</span> 详细点击分析</li>
+          <li><span class="icon yes">✓</span> 高清二维码(含Logo)</li>
+          <li><span class="icon yes">✓</span> 自定义短码</li>
+          <li><span class="icon yes">✓</span> 地理位置统计</li>
+          <li><span class="icon yes">✓</span> 批量生成</li>
+          <li><span class="icon yes">✓</span> 邮件支持</li>
+          <li class="disabled"><span class="icon no">—</span> API访问</li>
+        </ul>
+        <a href="#" class="btn btn-primary" onclick="handleSubscribe('pro')">立即订阅</a>
+      </div>
+
+      <!-- Business -->
+      <div class="plan">
+        <div class="plan-name">商业版</div>
+        <div class="plan-price monthly-price"><span class="currency">¥</span>99 <span class="period">/月</span></div>
+        <div class="plan-price yearly-price" style="display:none"><span class="currency">¥</span>950 <span class="period">/年</span></div>
+        <div class="plan-desc">企业和高级用户的完整方案</div>
+        <ul class="plan-features">
+          <li><span class="icon yes">✓</span> 无限短链</li>
+          <li><span class="icon yes">✓</span> 全部分析功能</li>
+          <li><span class="icon yes">✓</span> 完整API访问</li>
+          <li><span class="icon yes">✓</span> 自定义域名</li>
+          <li><span class="icon yes">✓</span> 团队协作</li>
+          <li><span class="icon yes">✓</span> 数据导出(CSV)</li>
+          <li><span class="icon yes">✓</span> Webhook通知</li>
+          <li><span class="icon yes">✓</span> 优先技术支持</li>
+        </ul>
+        <a href="#" class="btn btn-outline" onclick="handleSubscribe('business')">立即订阅</a>
+      </div>
+    </div>
+
+    <!-- Feature Comparison -->
+    <div class="comparison">
+      <h2>功能对比</h2>
+      <table class="comp-table">
+        <thead>
+          <tr><th>功能</th><th>免费版</th><th>专业版 ¥29/月</th><th>商业版 ¥99/月</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>短链数量</td><td>100/月</td><td>5,000/月</td><td>无限</td></tr>
+          <tr><td>点击追踪</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+          <tr><td>基础统计</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+          <tr><td>详细分析</td><td class="cross">✗</td><td class="check">✓</td><td class="check">✓</td></tr>
+          <tr><td>地理位置</td><td class="cross">✗</td><td class="check">✓</td><td class="check">✓</td></tr>
+          <tr><td>自定义短码</td><td class="cross">✗</td><td class="check">✓</td><td class="check">✓</td></tr>
+          <tr><td>二维码(高清+Logo)</td><td class="cross">✗</td><td class="check">✓</td><td class="check">✓</td></tr>
+          <tr><td>批量生成</td><td class="cross">✗</td><td class="check">✓</td><td class="check">✓</td></tr>
+          <tr><td>API访问</td><td class="cross">✗</td><td class="cross">✗</td><td class="check">✓</td></tr>
+          <tr><td>自定义域名</td><td class="cross">✗</td><td class="cross">✗</td><td class="check">✓</td></tr>
+          <tr><td>团队成员</td><td>1</td><td>3</td><td>无限</td></tr>
+          <tr><td>数据导出</td><td class="cross">✗</td><td class="cross">✗</td><td class="check">✓</td></tr>
+          <tr><td>Webhook</td><td class="cross">✗</td><td class="cross">✗</td><td class="check">✓</td></tr>
+          <tr><td>技术支持</td><td>社区</td><td>邮件</td><td>优先</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FAQ -->
+    <div class="faq-section">
+      <h2>常见问题</h2>
+      <div class="faq-grid">
+        <details class="faq-q">
+          <summary>可以随时取消订阅吗？</summary>
+          <p>当然可以。你可以随时在账户设置中取消订阅，取消后当前计费周期内仍可使用所有功能。我们提供7天无理由退款保证。</p>
+        </details>
+        <details class="faq-q">
+          <summary>超出免费额度会怎样？</summary>
+          <p>当月达到100条短链上限后，已创建的链接仍正常工作，但无法创建新链接。升级后立即恢复。</p>
+        </details>
+        <details class="faq-q">
+          <summary>数据安全如何保障？</summary>
+          <p>所有数据传输使用HTTPS加密，服务器部署在安全的云环境中。我们不会出售或分享你的数据。</p>
+        </details>
+        <details class="faq-q">
+          <summary>支持哪些支付方式？</summary>
+          <p>支持支付宝、微信支付、信用卡(Visa/Mastercard)。企业客户支持对公转账。</p>
+        </details>
+        <details class="faq-q">
+          <summary>有API文档吗？</summary>
+          <p>商业版用户可获得完整的RESTful API文档，支持所有核心功能的程序化调用。</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- Bottom CTA -->
+    <div class="bottom-cta">
+      <h2>准备好开始了吗？</h2>
+      <p>免费注册，立即体验。不满意7天内全额退款。</p>
+      <a href="/" class="btn btn-primary">免费开始 →</a>
+    </div>
+  </div>
+
+  <footer class="footer">LinkForge © 2026 · 用 ❤️ 构建</footer>
+
+  <script>
+    let isYearly = false;
+
+    function toggleBilling() {
+      isYearly = !isYearly;
+      document.getElementById('billingToggle').classList.toggle('yearly', isYearly);
+      document.getElementById('monthlyLabel').classList.toggle('active', !isYearly);
+      document.getElementById('yearlyLabel').classList.toggle('active', isYearly);
+      
+      document.querySelectorAll('.monthly-price').forEach(el => el.style.display = isYearly ? 'none' : 'block');
+      document.querySelectorAll('.yearly-price').forEach(el => el.style.display = isYearly ? 'block' : 'none');
+    }
+
+    function handleSubscribe(plan) {
+      // Stripe integration point
+      alert(`即将跳转到支付页面...\n\n方案: ${plan === 'pro' ? '专业版' : '商业版'}\n\n集成Stripe/Paddle后此处会跳转到真实支付页面。`);
+    }
+  </script>
+</body>
+</html>
